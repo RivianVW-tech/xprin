@@ -138,7 +138,10 @@ func processDirectory(fs afero.Fs, dir string, options *testexecutionUtils.Optio
 	if err != nil {
 		// Special case: if the error is just that no files were found, handle it as an info message
 		if strings.HasPrefix(err.Error(), "no test files found matching pattern") {
-			fmt.Fprintf(os.Stderr, "?   \t%s\t[no testsuite files]\n", dir)
+			if !options.Quiet {
+				fmt.Fprintf(os.Stderr, "?   \t%s\t[no testsuite files]\n", dir)
+			}
+
 			return nil
 		}
 		// For other errors, report them as real errors
@@ -177,7 +180,10 @@ func processTestSuiteFile(fs afero.Fs, testSuiteFile string, options *testexecut
 	testSuiteSpec, err := load(fs, testSuiteFile)
 	if err != nil {
 		if strings.HasPrefix(err.Error(), ("no test cases found")) {
-			fmt.Fprintf(os.Stderr, "?   \t%s\t[no test cases found]\n", testSuiteFile)
+			if !options.Quiet {
+				fmt.Fprintf(os.Stderr, "?   \t%s\t[no test cases found]\n", testSuiteFile)
+			}
+
 			return nil
 		}
 
