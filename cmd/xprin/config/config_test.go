@@ -255,3 +255,43 @@ func TestOperation_Run(t *testing.T) {
 		})
 	}
 }
+
+// TestConfigVsConfigCheck_DependenciesDisplay verifies that xprin config shows raw dependency values
+// while xprin config --check shows resolved paths with " (from PATH)" when applicable.
+func TestConfigVsConfigCheck_DependenciesDisplay(t *testing.T) {
+	cfg := &internalcfg.Config{
+		Dependencies: map[string]string{
+			"crossplane": "go", // command name, not a path
+		},
+		Repositories: map[string]string{},
+	}
+	configPath := "/test/config.yaml"
+
+	// Without --check: output must show the raw value as in the config
+	cmdNoCheck := &Cmd{Config: cfg, ConfigPath: configPath, Check: false}
+
+	capturedNoCheck := unittestUtils.CaptureOutput(func() {
+		_ = cmdNoCheck.Run(&kong.Context{})
+	})
+	if !strings.Contains(capturedNoCheck.Stdout, "crossplane: go") {
+		t.Errorf("xprin config (no --check) should show raw dependency value; stdout = %q", capturedNoCheck.Stdout)
+	}
+
+	if strings.Contains(capturedNoCheck.Stdout, "(from PATH)") {
+		t.Errorf("xprin config (no --check) should not show (from PATH); stdout = %q", capturedNoCheck.Stdout)
+	}
+
+	// With --check: output must show resolved path and " (from PATH)"
+	cmdCheck := &Cmd{Config: cfg, ConfigPath: configPath, Check: true}
+
+	capturedCheck := unittestUtils.CaptureOutput(func() {
+		_ = cmdCheck.Run(&kong.Context{})
+	})
+	if !strings.Contains(capturedCheck.Stdout, "(from PATH)") {
+		t.Errorf("xprin config --check should show (from PATH) for command in PATH; stdout = %q", capturedCheck.Stdout)
+	}
+
+	if strings.Contains(capturedCheck.Stdout, "- crossplane: go\n") {
+		t.Errorf("xprin config --check should resolve command to path, not show raw 'go'; stdout = %q", capturedCheck.Stdout)
+	}
+}

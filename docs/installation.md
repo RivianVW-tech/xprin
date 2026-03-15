@@ -113,7 +113,7 @@ The `xprin check` command verifies that:
 - Configuration file (if present) is valid
 - Repositories (if configured) are accessible
 
-Use `-q`/`--quiet` to suppress all output on success; only the exit code indicates pass or fail (useful in scripts or CI).
+The output shows resolved dependency paths and appends ` (from PATH)` when a dependency was found in your `PATH`. Use `-q`/`--quiet` to suppress all output on success; only the exit code indicates pass or fail (useful in scripts or CI).
 
 ## xprin-helpers
 

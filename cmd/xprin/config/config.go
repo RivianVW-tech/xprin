@@ -73,7 +73,12 @@ func (c *Cmd) Run(_ *kong.Context) error {
 	utils.OutputPrintf("\nDependencies:\n")
 
 	for name, value := range c.Config.Dependencies {
-		utils.OutputPrintf("- %s: %s\n", name, value)
+		dependencyValue := value
+		if c.Check {
+			dependencyValue = configtypes.FormatDependencyValue(value, c.ConfigPath != "")
+		}
+
+		utils.OutputPrintf("- %s: %s\n", name, dependencyValue)
 	}
 
 	if c.Config.Subcommands != nil {
