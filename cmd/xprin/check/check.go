@@ -31,6 +31,7 @@ import (
 type Cmd struct {
 	Config     *configtypes.Config `kong:"-"`
 	ConfigPath string              `kong:"-"`
+	Quiet      bool                `help:"Suppress all output on success; exit code only." name:"quiet" short:"q"`
 	fs         afero.Fs
 }
 
@@ -45,10 +46,12 @@ func (c *Cmd) Run(_ *kong.Context) error {
 	// combine all error messages
 	var allErrors []string
 
-	if c.ConfigPath == "" {
-		utils.OutputPrintf("No configuration file provided, using detected dependencies\n")
-	} else {
-		utils.OutputPrintf("Configuration file: %s\n\n", c.ConfigPath)
+	if !c.Quiet {
+		if c.ConfigPath == "" {
+			utils.OutputPrintf("No configuration file provided, using detected dependencies\n")
+		} else {
+			utils.OutputPrintf("Configuration file: %s\n\n", c.ConfigPath)
+		}
 	}
 
 	// Always check dependencies, subcommands, and repositories
@@ -66,6 +69,10 @@ func (c *Cmd) Run(_ *kong.Context) error {
 
 	if len(allErrors) > 0 {
 		return fmt.Errorf("configuration check failed:\n%s", strings.Join(allErrors, "\n"))
+	}
+
+	if c.Quiet {
+		return nil
 	}
 
 	utils.OutputPrintf("Configuration check successful\n")

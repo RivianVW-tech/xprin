@@ -97,10 +97,14 @@ xprin config
 # Check configuration and dependencies
 xprin check
 
+# Check with no output on success (exit code only; useful in scripts or CI)
+xprin check -q
+
 # Or use the config command (equivalent)
 xprin config --check
 
-# Use custom config file
+# Use custom global config file
+xprin -c /path/to/config.yaml config --check
 xprin -c /path/to/config.yaml test tests/
 ```
 
