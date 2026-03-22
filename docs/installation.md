@@ -113,6 +113,8 @@ The `xprin check` command verifies that:
 - Configuration file (if present) is valid
 - Repositories (if configured) are accessible
 
+Use `-q`/`--quiet` to suppress all output on success; only the exit code indicates pass or fail (useful in scripts or CI).
+
 ## xprin-helpers
 
 **Note**: xprin-helpers are used as libraries by xprin and are automatically included when you install xprin. You don't need to install them separately.

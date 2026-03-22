@@ -60,20 +60,28 @@ xprin test tests/test1_xprin.yaml tests/... tests/test2_xprin.yaml
 
 ### Usual Command Options
 
+`-v`/`--verbose` and `-q`/`--quiet` are independent: the first controls how much detail is shown for test runs, the second only suppresses the "[no testsuite files]" and "[no test cases found]" messages. You can use both together (e.g. `-q -v` for verbose test output without those skip messages).
+
 ```bash
-# Verbose output
+# Verbose output (RUN, PASS/FAIL, phase details). Does not affect -q.
 xprin test tests/basic_xprin.yaml -v
 
-# Show rendered resources
+# Quiet: suppress "[no testsuite files]" and "[no test cases found]" (e.g. when running tests/... over dirs with testdata). Does not affect -v.
+xprin test tests/... -q
+
+# Both: verbose test output, no skip messages
+xprin test tests/... -q -v
+
+# Show rendered resources (requires -v)
 xprin test tests/basic_xprin.yaml -v --show-render
 
-# Show validation results
+# Show validation results (requires -v)
 xprin test tests/basic_xprin.yaml -v --show-validate
 
-# Show hooks execution
+# Show hooks execution (requires -v)
 xprin test tests/advanced_xprin.yaml -v --show-hooks
 
-# Show assertion results
+# Show assertion results (requires -v)
 xprin test tests/advanced_xprin.yaml -v --show-assertions
 
 # Debug mode (shows detailed execution information)
@@ -89,10 +97,14 @@ xprin config
 # Check configuration and dependencies
 xprin check
 
+# Check with no output on success (exit code only; useful in scripts or CI)
+xprin check -q
+
 # Or use the config command (equivalent)
 xprin config --check
 
-# Use custom config file
+# Use custom global config file
+xprin -c /path/to/config.yaml config --check
 xprin -c /path/to/config.yaml test tests/
 ```
 

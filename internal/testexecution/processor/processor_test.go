@@ -353,6 +353,21 @@ func TestProcessDirectory(t *testing.T) {
 			"expected no testsuite files message")
 	})
 
+	t.Run("quiet suppresses [no testsuite files]", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+		dir := "/somedir"
+		require.NoError(t, fs.MkdirAll(dir, 0o755))
+
+		var err error
+
+		out := unittestsUtils.CaptureStderr(func() {
+			err = processDirectory(fs, dir, &testexecutionUtils.Options{Quiet: true})
+		})
+
+		require.NoError(t, err)
+		assert.NotContains(t, out, "[no testsuite files]", "should not emit [no testsuite files] when quiet is set")
+	})
+
 	// Integration: processDirectory prints file names for each file
 	t.Run("prints file names for each file", func(t *testing.T) {
 		fs := afero.NewMemMapFs()
@@ -398,6 +413,21 @@ func TestProcessTestSuiteFile(t *testing.T) {
 		if err != nil {
 			t.Errorf("did not expect error, got: %v", err)
 		}
+	})
+
+	t.Run("quiet suppresses [no test cases found]", func(t *testing.T) {
+		fs := afero.NewMemMapFs()
+		testFile := testSuiteYAML
+		require.NoError(t, afero.WriteFile(fs, testFile, []byte("common:\n  inputs:\n    composition: comp.yaml\n"), 0o644))
+
+		var err error
+
+		out := unittestsUtils.CaptureStderr(func() {
+			err = processTestSuiteFile(fs, testFile, &testexecutionUtils.Options{Quiet: true})
+		})
+
+		require.NoError(t, err)
+		assert.NotContains(t, out, "[no test cases found]", "should not emit [no test cases found] when quiet is set")
 	})
 
 	t.Run("invalid config error", func(t *testing.T) {

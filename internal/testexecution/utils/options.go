@@ -28,6 +28,7 @@ type Options struct {
 	Verbose        bool
 	Debug          bool
 	Color          bool // When true, diff output is colorized (resolved from --color on|off|auto in the CLI).
+	Quiet          bool // When true, suppress "[no testsuite files]" and "[no test cases found]" messages. Independent of Verbose.
 	Render         []string
 	Validate       []string
 }
