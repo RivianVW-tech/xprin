@@ -124,12 +124,13 @@ func Fallback() (*Config, error) {
 
 	var missingMandatoryDeps []string
 
-	// Check mandatory dependencies
+	// Check mandatory dependencies and resolve to absolute path
 	for _, dep := range mandatoryDeps {
-		if _, err := exec.LookPath(dep); err != nil {
+		depPath, err := exec.LookPath(dep)
+		if err != nil {
 			missingMandatoryDeps = append(missingMandatoryDeps, dep)
 		} else {
-			foundDeps[dep] = dep
+			foundDeps[dep] = depPath
 		}
 	}
 

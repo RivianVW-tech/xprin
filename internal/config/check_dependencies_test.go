@@ -326,3 +326,71 @@ func TestCheckDependencyExtraSpaces(t *testing.T) {
 		})
 	}
 }
+
+func TestFormatDependencyValue(t *testing.T) {
+	tmpDir := t.TempDir()
+	absPath := filepath.Join(tmpDir, "bin")
+
+	const fromPATH = " (from PATH)"
+
+	tests := []struct {
+		name       string
+		value      string
+		fromConfig bool
+		want       string
+	}{
+		{
+			name:       "Fallback: value is path, return with (from PATH)",
+			value:      absPath,
+			fromConfig: false,
+			want:       absPath + fromPATH,
+		},
+		{
+			name:       "from config: empty value",
+			value:      "",
+			fromConfig: true,
+			want:       "",
+		},
+		{
+			name:       "from config: absolute path",
+			value:      absPath,
+			fromConfig: true,
+			want:       absPath,
+		},
+		{
+			name:       "from config: command in PATH",
+			value:      "go",
+			fromConfig: true,
+			want:       "", // non-empty and must contain "(from PATH)" and not be "go"
+		},
+		{
+			name:       "from config: LookPath fails",
+			value:      "nonexistent-xyz-123",
+			fromConfig: true,
+			want:       "nonexistent-xyz-123",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := FormatDependencyValue(tt.value, tt.fromConfig)
+			if tt.want != "" {
+				if got != tt.want {
+					t.Errorf("FormatDependencyValue() = %q, want %q", got, tt.want)
+				}
+
+				return
+			}
+			// "command in PATH" case: result must contain "(from PATH)" and be resolved (not "go")
+			if tt.value == "go" {
+				if !strings.Contains(got, fromPATH) {
+					t.Errorf("FormatDependencyValue() = %q, want to contain %q", got, fromPATH)
+				}
+
+				if got == "go" || got == "go"+fromPATH {
+					t.Errorf("FormatDependencyValue() should resolve to absolute path, got %q", got)
+				}
+			}
+		})
+	}
+}

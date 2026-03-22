@@ -416,8 +416,8 @@ func TestFallback(t *testing.T) {
 		t.Errorf("Expected no error when mandatory dependency is present, got: %v", err)
 	}
 
-	if cfg == nil || cfg.Dependencies["crossplane"] != "crossplane" {
-		t.Error("Fallback config did not set crossplane dependency correctly")
+	if cfg == nil || cfg.Dependencies["crossplane"] != crossplanePath {
+		t.Errorf("Fallback config did not set crossplane dependency to resolved path: got %q", cfg.Dependencies["crossplane"])
 	}
 	// Only crossplane should be in dependencies since convert-claim-to-xr and patch-xr are now library dependencies
 	if len(cfg.Dependencies) != 1 {

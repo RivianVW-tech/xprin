@@ -113,6 +113,33 @@ func (c *Config) CheckDependencies() error {
 	return nil
 }
 
+// FormatDependencyValue returns the dependency value formatted for display, including " (from PATH)" when resolved from PATH.
+// When fromConfig is false (Fallback), value is already the resolved path; return value + " (from PATH)".
+// When fromConfig is true (config file): absolute path → path; command name → resolve via LookPath, path + " (from PATH)" or value on error.
+func FormatDependencyValue(value string, fromConfig bool) string {
+	const fromPATH = " (from PATH)"
+	if !fromConfig {
+		return value + fromPATH
+	}
+
+	parts := strings.Fields(value)
+	if len(parts) == 0 {
+		return value
+	}
+
+	first := parts[0]
+	if filepath.IsAbs(first) {
+		return first
+	}
+
+	resolved, err := exec.LookPath(first)
+	if err != nil {
+		return value
+	}
+
+	return resolved + fromPATH
+}
+
 // CheckSubcommands checks if the subcommands.render and subcommands.validate are valid.
 // They must start with "render" or "beta render" (for render), and "validate" or "beta validate" (for validate).
 func (c *Config) CheckSubcommands() error {
