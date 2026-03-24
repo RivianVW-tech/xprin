@@ -42,28 +42,41 @@ func (e *assertionExecutor) executeAssertionsXprin(assertions []api.AssertionXpr
 
 // executeAssertionXprin executes a single xprin assertion.
 func (e *assertionExecutor) executeAssertionXprin(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
+	var results []engine.AssertionResult
+	var err error
+
 	switch assertion.Type {
 	case "Count":
-		return e.executeCountAssertion(assertion)
+		results, err = e.executeCountAssertion(assertion)
 	case "Exists":
-		return e.executeExistsAssertion(assertion)
+		results, err = e.executeExistsAssertion(assertion)
 	case "NotExists":
-		return e.executeNotExistsAssertion(assertion)
+		results, err = e.executeNotExistsAssertion(assertion)
 	case "FieldType":
-		return e.executeFieldTypeAssertion(assertion)
+		results, err = e.executeFieldTypeAssertion(assertion)
 	case "FieldExists":
-		return e.executeFieldExistsAssertion(assertion)
+		results, err = e.executeFieldExistsAssertion(assertion)
 	case "FieldNotExists":
-		return e.executeFieldNotExistsAssertion(assertion)
+		results, err = e.executeFieldNotExistsAssertion(assertion)
 	case "FieldValue":
-		return e.executeFieldValueAssertion(assertion)
+		results, err = e.executeFieldValueAssertion(assertion)
 	default:
-		return []engine.AssertionResult{engine.NewAssertionResult(
-			assertion.Name,
-			engine.StatusError(),
-			fmt.Sprintf("unsupported assertion type: %s", assertion.Type),
-		)}, nil
+		err = fmt.Errorf("unsupported assertion type: %s", assertion.Type)
 	}
+
+	// Wrap the error inside assertion result
+	if err != nil {
+		results = []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}
+	}
+
+	// If results is still nil at this point, it means an assertion returned nil for both results and err
+	if results == nil {
+		results = []engine.AssertionResult{
+			engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("Internal error: returned nil for both results and error")),
+		}
+	}
+
+	return results, nil
 }
 
 // executeCountAssertion executes a count assertion.
@@ -75,11 +88,11 @@ func (e *assertionExecutor) executeCountAssertion(assertion api.AssertionXprin) 
 		if floatVal, ok := assertion.Value.(float64); ok {
 			expectedCount = int(floatVal)
 		} else {
-			return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("count assertion value must be a number, got %T", assertion.Value))}, nil
+			return nil, fmt.Errorf("count assertion value must be a number, got %T", assertion.Value)
 		}
 	}
 	if expectedCount < 0 {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("count assertion value must be non-negative, got %d", expectedCount))}, nil
+		return nil, fmt.Errorf("count assertion value must be non-negative, got %d", expectedCount)
 	}
 
 	var actualCount int
@@ -92,7 +105,7 @@ func (e *assertionExecutor) executeCountAssertion(assertion api.AssertionXprin) 
 		var err error
 		resources, err = e.findResources(assertion.Resource)
 		if err != nil {
-			return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+			return nil, err
 		}
 		actualCount = len(resources)
 	}
@@ -101,17 +114,14 @@ func (e *assertionExecutor) executeCountAssertion(assertion api.AssertionXprin) 
 
 	var message string
 	if passed {
-		if len(resources) > 0 {
-			message = fmt.Sprintf("found %d resources (as expected): %s", actualCount, toIdentifiersString(resources))
-		} else {
-			message = fmt.Sprintf("found %d resources (as expected)", actualCount)
-		}
+		message = fmt.Sprintf("found %d resources (as expected)", actualCount)
 	} else {
-		if len(resources) > 0 {
-			message = fmt.Sprintf("expected %d resources, got %d resources: %s", expectedCount, actualCount, toIdentifiersString(resources))
-		} else {
-			message = fmt.Sprintf("expected %d resources, got %d", expectedCount, actualCount)
-		}
+		message = fmt.Sprintf("expected %d resources, got %d", expectedCount, actualCount)
+	}
+
+	// List resources that were used in the assertion
+	if len(resources) > 0 {
+		message = fmt.Sprintf("%s: %s", message, toIdentifiersString(resources))
 	}
 
 	status := engine.StatusFail()
@@ -127,12 +137,12 @@ func (e *assertionExecutor) executeExistsAssertion(assertion api.AssertionXprin)
 	// Get the expected resource identifier from the assertion resource field
 	resourceIdentifier := assertion.Resource
 	if resourceIdentifier == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "exists assertion requires resource field")}, nil
+		return nil, fmt.Errorf("exists assertion requires resource field")
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	var message string
@@ -155,12 +165,12 @@ func (e *assertionExecutor) executeNotExistsAssertion(assertion api.AssertionXpr
 	// Get the resource identifier from the assertion resource field
 	resourceIdentifier := assertion.Resource
 	if resourceIdentifier == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "not exists assertion requires resource field")}, nil
+		return nil, fmt.Errorf("not exists assertion requires resource field")
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	var message string
@@ -182,30 +192,30 @@ func (e *assertionExecutor) executeNotExistsAssertion(assertion api.AssertionXpr
 func (e *assertionExecutor) executeFieldTypeAssertion(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
 	// Validate required fields
 	if assertion.Resource == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field type assertion requires resource field")}, nil
+		return nil, fmt.Errorf("field type assertion requires resource field")
 	}
 
 	if assertion.Field == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field type assertion requires field")}, nil
+		return nil, fmt.Errorf("field type assertion requires field")
 	}
 
 	if assertion.Value == nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field type assertion requires value field")}, nil
+		return nil, fmt.Errorf("field type assertion requires value field")
 	}
 
 	// Get expected type
 	expectedType, ok := assertion.Value.(string)
 	if !ok {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("field type assertion value must be a string, got %T", assertion.Value))}, nil
+		return nil, fmt.Errorf("field type assertion value must be a string, got %T", assertion.Value)
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	if len(resources) == 0 {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("no rendered resource matched the given name %s", assertion.Resource))}, nil
+		return nil, fmt.Errorf("no rendered resource matched the given name %s", assertion.Resource)
 	}
 
 	results := make([]engine.AssertionResult, len(resources))
@@ -243,20 +253,20 @@ func (e *assertionExecutor) executeFieldTypeAssertion(assertion api.AssertionXpr
 func (e *assertionExecutor) executeFieldExistsAssertion(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
 	// Validate required fields
 	if assertion.Resource == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field exists assertion requires resource field")}, nil
+		return nil, fmt.Errorf("field exists assertion requires resource field")
 	}
 
 	if assertion.Field == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field exists assertion requires field")}, nil
+		return nil, fmt.Errorf("field exists assertion requires field")
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	if len(resources) == 0 {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("no rendered resource matched the given name %s", assertion.Resource))}, nil
+		return nil, fmt.Errorf("no rendered resource matched the given name %s", assertion.Resource)
 	}
 
 	results := make([]engine.AssertionResult, len(resources))
@@ -290,20 +300,20 @@ func (e *assertionExecutor) executeFieldExistsAssertion(assertion api.AssertionX
 func (e *assertionExecutor) executeFieldNotExistsAssertion(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
 	// Validate required fields
 	if assertion.Resource == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field not exists assertion requires resource field")}, nil
+		return nil, fmt.Errorf("field not exists assertion requires resource field")
 	}
 
 	if assertion.Field == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field not exists assertion requires field")}, nil
+		return nil, fmt.Errorf("field not exists assertion requires field")
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	if len(resources) == 0 {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("no rendered resource matched the given name %s", assertion.Resource))}, nil
+		return nil, fmt.Errorf("no rendered resource matched the given name %s", assertion.Resource)
 	}
 
 	results := make([]engine.AssertionResult, len(resources))
@@ -340,28 +350,28 @@ func (e *assertionExecutor) executeFieldNotExistsAssertion(assertion api.Asserti
 func (e *assertionExecutor) executeFieldValueAssertion(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
 	// Validate required fields
 	if assertion.Resource == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field value assertion requires resource field")}, nil
+		return nil, fmt.Errorf("field value assertion requires resource field")
 	}
 
 	if assertion.Field == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field value assertion requires field")}, nil
+		return nil, fmt.Errorf("field value assertion requires field")
 	}
 
 	if assertion.Operator == "" {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field value assertion requires operator field")}, nil
+		return nil, fmt.Errorf("field value assertion requires operator field")
 	}
 
 	if assertion.Value == nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), "field value assertion requires value field")}, nil
+		return nil, fmt.Errorf("field value assertion requires value field")
 	}
 
 	resources, err := e.findResources(assertion.Resource)
 	if err != nil {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), err.Error())}, nil
+		return nil, err
 	}
 
 	if len(resources) == 0 {
-		return []engine.AssertionResult{engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("no rendered resource matched the given name %s", assertion.Resource))}, nil
+		return nil, fmt.Errorf("no rendered resource matched the given name %s", assertion.Resource)
 	}
 
 	results := make([]engine.AssertionResult, len(resources))

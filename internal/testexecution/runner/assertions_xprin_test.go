@@ -234,7 +234,7 @@ metadata:
 
 		require.NoError(t, err)
 		assert.Equal(t, engine.StatusFail(), results[0].Status)
-		assert.Contains(t, results[0].Message, "expected 5 resources, got 1 resources:")
+		assert.Contains(t, results[0].Message, "expected 5 resources, got 1")
 		assert.Contains(t, results[0].Message, "Pod/test-pod")
 	})
 
@@ -291,9 +291,9 @@ metadata:
 		assertion := api.AssertionXprin{Name: "count-test", Type: "Count", Value: "not-a-number"}
 		results, err := executor.executeCountAssertion(assertion)
 
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "count assertion value must be a number")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "count assertion value must be a number")
 	})
 }
 
@@ -399,9 +399,9 @@ metadata:
 		assertion := api.AssertionXprin{Name: "exists-test", Type: "Exists", Resource: ""}
 		results, err := executor.executeExistsAssertion(assertion)
 
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires resource field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires resource field")
 	})
 
 	t.Run("fails with invalid resource format", func(t *testing.T) {
@@ -414,9 +414,9 @@ metadata:
 		assertion := api.AssertionXprin{Name: "exists-test", Type: "Exists", Resource: "Pod/name/extra"}
 		results, err := executor.executeExistsAssertion(assertion)
 
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "must be in format")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "must be in format")
 	})
 }
 
@@ -486,9 +486,9 @@ metadata:
 		assertion := api.AssertionXprin{Name: "not-exists-test", Type: "NotExists", Resource: ""}
 		results, err := executor.executeNotExistsAssertion(assertion)
 
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires resource field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires resource field")
 	})
 }
 
@@ -573,16 +573,16 @@ spec:
 		// Missing resource
 		assertion := api.AssertionXprin{Name: "field-type-test", Type: "FieldType", Field: "spec.replicas", Value: "int"}
 		results, err := executor.executeFieldTypeAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires resource field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires resource field")
 
 		// Missing field
 		assertion = api.AssertionXprin{Name: "field-type-test", Type: "FieldType", Resource: "Pod/test", Value: "int"}
 		results, err = executor.executeFieldTypeAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires field")
 	})
 }
 
@@ -806,30 +806,30 @@ spec:
 		// Missing resource
 		assertion := api.AssertionXprin{Name: "field-value-test", Type: "FieldValue", Field: "spec.replicas", Operator: "==", Value: float64(3)}
 		results, err := executor.executeFieldValueAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires resource field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires resource field")
 
 		// Missing field
 		assertion = api.AssertionXprin{Name: "field-value-test", Type: "FieldValue", Resource: "Pod/test", Operator: "==", Value: float64(3)}
 		results, err = executor.executeFieldValueAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires field")
 
 		// Missing operator
 		assertion = api.AssertionXprin{Name: "field-value-test", Type: "FieldValue", Resource: "Pod/test", Field: "spec.replicas", Value: 3}
 		results, err = executor.executeFieldValueAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires operator field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires operator field")
 
 		// Missing value
 		assertion = api.AssertionXprin{Name: "field-value-test", Type: "FieldValue", Resource: "Pod/test", Field: "spec.replicas", Operator: "=="}
 		results, err = executor.executeFieldValueAssertion(assertion)
-		require.NoError(t, err)
-		assert.Equal(t, engine.StatusError(), results[0].Status)
-		assert.Contains(t, results[0].Message, "requires value field")
+		require.Error(t, err)
+		assert.Nil(t, results)
+		assert.Contains(t, err.Error(), "requires value field")
 	})
 
 	t.Run("fails with unsupported operator", func(t *testing.T) {
