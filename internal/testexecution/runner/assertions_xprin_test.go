@@ -879,14 +879,12 @@ func TestAssertionExecutor_executeAssertionXprin(t *testing.T) {
 
 		// Test Count
 		assertion := api.AssertionXprin{Name: "test", Type: "Count", Value: 0}
-		results, err := executor.executeAssertionXprin(assertion)
-		require.NoError(t, err)
+		results := executor.executeAssertionXprin(assertion)
 		assert.Equal(t, engine.StatusPass(), results[0].Status)
 
 		// Test unsupported type
 		assertion = api.AssertionXprin{Name: "test", Type: "Unsupported", Value: "test"}
-		results, err = executor.executeAssertionXprin(assertion)
-		require.NoError(t, err)
+		results = executor.executeAssertionXprin(assertion)
 		assert.Equal(t, engine.StatusError(), results[0].Status)
 		assert.Contains(t, results[0].Message, "unsupported assertion type")
 	})

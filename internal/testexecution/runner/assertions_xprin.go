@@ -33,17 +33,20 @@ import (
 func (e *assertionExecutor) executeAssertionsXprin(assertions []api.AssertionXprin) []engine.AssertionResult {
 	results := make([]engine.AssertionResult, 0, len(assertions))
 	for _, assertion := range assertions {
-		assertionResults, _ := e.executeAssertionXprin(assertion)
+		assertionResults := e.executeAssertionXprin(assertion)
 		results = append(results, assertionResults...)
 	}
 
 	return results
 }
 
-// executeAssertionXprin executes a single xprin assertion.
-func (e *assertionExecutor) executeAssertionXprin(assertion api.AssertionXprin) ([]engine.AssertionResult, error) {
-	var results []engine.AssertionResult
-	var err error
+// executeAssertionXprin executes a single xprin assertion. Operational errors from
+// sub-handlers are represented as StatusError results, not as a Go error return.
+func (e *assertionExecutor) executeAssertionXprin(assertion api.AssertionXprin) []engine.AssertionResult {
+	var (
+		results []engine.AssertionResult
+		err     error
+	)
 
 	switch assertion.Type {
 	case "Count":
@@ -72,11 +75,11 @@ func (e *assertionExecutor) executeAssertionXprin(assertion api.AssertionXprin) 
 	// If results is still nil at this point, it means an assertion returned nil for both results and err
 	if results == nil {
 		results = []engine.AssertionResult{
-			engine.NewAssertionResult(assertion.Name, engine.StatusError(), fmt.Sprintf("Internal error: returned nil for both results and error")),
+			engine.NewAssertionResult(assertion.Name, engine.StatusError(), "Internal error: returned nil for both results and error"),
 		}
 	}
 
-	return results, nil
+	return results
 }
 
 // executeCountAssertion executes a count assertion.
@@ -91,22 +94,28 @@ func (e *assertionExecutor) executeCountAssertion(assertion api.AssertionXprin) 
 			return nil, fmt.Errorf("count assertion value must be a number, got %T", assertion.Value)
 		}
 	}
+
 	if expectedCount < 0 {
 		return nil, fmt.Errorf("count assertion value must be non-negative, got %d", expectedCount)
 	}
 
-	var actualCount int
-	var resources []*unstructured.Unstructured
+	var (
+		actualCount int
+		resources   []*unstructured.Unstructured
+	)
+
 	if assertion.Resource == "" {
 		// Count the number of all resources in the rendered output
 		actualCount = len(e.outputs.Rendered)
 	} else {
 		// Count only the resources that match a certain pattern
 		var err error
+
 		resources, err = e.findResources(assertion.Resource)
 		if err != nil {
 			return nil, err
 		}
+
 		actualCount = len(resources)
 	}
 
@@ -401,13 +410,16 @@ func (e *assertionExecutor) executeFieldValueAssertion(assertion api.AssertionXp
 		if passed {
 			status = engine.StatusPass()
 		}
+
 		results[i] = engine.NewAssertionResult(assertion.Name, status, message)
 	}
+
 	return results, nil
 }
 
 func (e *assertionExecutor) findResources(pattern string) ([]*unstructured.Unstructured, error) {
 	matchedResources := []*unstructured.Unstructured{}
+
 	pattern = strings.TrimSpace(pattern)
 	if pattern == "" {
 		return nil, fmt.Errorf("resource pattern cannot be empty")
@@ -428,6 +440,7 @@ func (e *assertionExecutor) findResources(pattern string) ([]*unstructured.Unstr
 		if err != nil {
 			return nil, fmt.Errorf("invalid resource pattern %q: %w", pattern, err)
 		}
+
 		if !isMatched {
 			continue
 		}
@@ -552,6 +565,7 @@ func resourceID(r *unstructured.Unstructured) string {
 	if r == nil {
 		return ""
 	}
+
 	return fmt.Sprintf("%s/%s", r.GetKind(), r.GetName())
 }
 
@@ -560,5 +574,6 @@ func toIdentifiersString(resources []*unstructured.Unstructured) string {
 	for i, r := range resources {
 		identifiers[i] = resourceID(r)
 	}
+
 	return strings.Join(identifiers, ", ")
 }
