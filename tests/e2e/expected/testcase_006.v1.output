@@ -8,9 +8,6 @@
         [!] could not find CRD/XRD for: aws.example.com/v1, Kind=XAWSInfrastructure
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
-    Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
-        Total: 1 assertions, 0 successful, 1 failed, 0 errors
 === RUN   Validation failure (v1 only) (missing required team)
 --- FAIL: Validation failure (v1 only) (missing required team) (X.XXXs)
     Validate:
@@ -50,9 +47,6 @@
 --- PASS: Successful test case (X.XXXs)
 === RUN   Post-test hook failure
 --- FAIL: Post-test hook failure (X.XXXs)
-    Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
-        Total: 1 assertions, 0 successful, 1 failed, 0 errors
     Post-test Hooks:
         [x] Fail post-test hook [exit code: 1]
 === RUN   Invalid Post-test hook, template rendering error
@@ -65,7 +59,6 @@
 === RUN   Assertion failure
 --- FAIL: Assertion failure (X.XXXs)
     Assertions:
-        [x] Resource count should be two - expected 4 resources, got 2
         [x] Resource count should be zero - expected 0 resources, got 2
         [!] Wrong resource name - no rendered resource matched the given name Cluster/doesnotexist
         [x] Full render matches golden (using diff)
@@ -120,7 +113,7 @@
 
         [!] Failed to get golden file - read expected file: open /examples/mytests/0_e2e/doesnotexist.yaml: no such file or directory
         [!] Wrong resource name - resource "SecurityGroup/doesnotexist" not found in render output
-        Total: 11 assertions, 0 successful, 6 failed, 5 errors
+        Total: 11 assertions, 1 successful, 5 failed, 5 errors
 === RUN   Failed validation and assertion
 --- FAIL: Failed validation and assertion (X.XXXs)
     Validate:
@@ -128,9 +121,8 @@
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
         [x] Failed assertion - expected 0 resources, got 2
-        Total: 2 assertions, 0 successful, 2 failed, 0 errors
+        Total: 2 assertions, 1 successful, 1 failed, 0 errors
 === RUN   Failed validation, assertion, and post-test hook
 --- FAIL: Failed validation, assertion, and post-test hook (X.XXXs)
     Validate:
@@ -138,9 +130,8 @@
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
         [x] Failed assertion - expected 0 resources, got 2
-        Total: 2 assertions, 0 successful, 2 failed, 0 errors
+        Total: 2 assertions, 1 successful, 1 failed, 0 errors
     Post-test Hooks:
         [x] Failed post-test hook [exit code: 2]
 FAIL

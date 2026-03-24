@@ -20,8 +20,8 @@
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
-        Total: 1 assertions, 0 successful, 1 failed, 0 errors
+        [✓] Successful assertion - found 2 resources (as expected)
+        Total: 1 assertions, 1 successful, 0 failed, 0 errors
     Post-test Hooks:
         [✓] echo "bye"
             bye
@@ -81,8 +81,8 @@
         [✓] ec2.aws.upbound.io/v1beta1, Kind=SecurityGroup, platform-aws-sg validated successfully
         Total 2 resources: 0 missing schemas, 2 success cases, 0 failure cases
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
-        Total: 1 assertions, 0 successful, 1 failed, 0 errors
+        [✓] Successful assertion - found 2 resources (as expected)
+        Total: 1 assertions, 1 successful, 0 failed, 0 errors
     Post-test Hooks:
         [x] Fail post-test hook [exit code: 1]
 === RUN   Invalid Post-test hook, template rendering error
@@ -114,7 +114,7 @@
         [✓] ec2.aws.upbound.io/v1beta1, Kind=SecurityGroup, platform-aws-sg validated successfully
         Total 2 resources: 0 missing schemas, 2 success cases, 0 failure cases
     Assertions:
-        [x] Resource count should be two - expected 4 resources, got 2
+        [✓] Resource count should be two - found 2 resources (as expected)
         [x] Resource count should be zero - expected 0 resources, got 2
         [!] Wrong resource name - no rendered resource matched the given name Cluster/doesnotexist
         [x] Full render matches golden (using diff)
@@ -169,7 +169,7 @@
 
         [!] Failed to get golden file - read expected file: open /examples/mytests/0_e2e/doesnotexist.yaml: no such file or directory
         [!] Wrong resource name - resource "SecurityGroup/doesnotexist" not found in render output
-        Total: 11 assertions, 0 successful, 6 failed, 5 errors
+        Total: 11 assertions, 1 successful, 5 failed, 5 errors
     Post-test Hooks:
         [✓] echo "bye"
             bye
@@ -187,9 +187,9 @@
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
+        [✓] Successful assertion - found 2 resources (as expected)
         [x] Failed assertion - expected 0 resources, got 2
-        Total: 2 assertions, 0 successful, 2 failed, 0 errors
+        Total: 2 assertions, 1 successful, 1 failed, 0 errors
     Post-test Hooks:
         [✓] echo "bye"
             bye
@@ -207,9 +207,9 @@
         Total 2 resources: 1 missing schemas, 1 success cases, 0 failure cases
         crossplane: error: cannot validate resources: could not validate all resources, schema(s) missing
     Assertions:
-        [x] Successful assertion - expected 4 resources, got 2
+        [✓] Successful assertion - found 2 resources (as expected)
         [x] Failed assertion - expected 0 resources, got 2
-        Total: 2 assertions, 0 successful, 2 failed, 0 errors
+        Total: 2 assertions, 1 successful, 1 failed, 0 errors
     Post-test Hooks:
         [✓] Successful post-test hook
             bye
